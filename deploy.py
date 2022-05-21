@@ -19,7 +19,8 @@ OCR_TH = 0.15
 
 
 
-
+model =  torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt',force_reload=True) ### The repo is stored locally
+   
 ### -------------------------------------- function to run detection ---------------------------------------------------------
 def detectx (frame, model):
     frame = [frame]
@@ -177,7 +178,7 @@ def main(img_path=None, vid_path=None,vid_out = None):
     print(f"[INFO] Loading model... ");
     ## loading the custom trained model
     # model =  torch.hub.load('ultralytics/yolov5', 'custom', path='last.pt',force_reload=True) ## if you want to download the git repo and then run the detection
-    model =  torch.hub.load('./yolov5-master', 'custom', source ='local', path='best.pt',force_reload=True) ### The repo is stored locally
+    # model =  torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt',force_reload=True) ### The repo is stored locally
     classes = model.names ### class names in string format
     ### --------------- for detection on image --------------------
     if img_path != None:
