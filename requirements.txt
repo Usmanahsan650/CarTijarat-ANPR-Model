@@ -1,3 +1,4 @@
+-f https://download.pytorch.org/whl/lts/1.8/torch_lts.html
 absl-py==1.0.0
 cachetools==5.0.0
 certifi==2021.10.8
