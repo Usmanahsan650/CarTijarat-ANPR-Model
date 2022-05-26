@@ -19,8 +19,8 @@ OCR_TH = 0.15
 
 
 
-model =  torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt',force_reload=True) ### The repo is stored locally
-   
+# model =  torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt',force_reload=True) ### The repo is stored locally
+model =  torch.hub.load('./yolov5-master', 'custom', source ='local', path='best.pt',force_reload=True)  ### The repo is stored locally
 ### -------------------------------------- function to run detection ---------------------------------------------------------
 def detectx (frame, model):
     frame = [frame]
@@ -47,9 +47,15 @@ def plot_boxes(results, frame,classes):
     x_shape, y_shape = frame.shape[1], frame.shape[0]
     print(f"[INFO] Total {n} detections. . . ")
     print(f"[INFO] Looping through all detections. . . ")
+    plate_num=None;
+    max1=0;
     for i in range(n):
         row = cord[i]
         if row[4] >= 0.5: ### threshold value for detection. We are discarding everything below this value
+            if(row[4]<max1):
+                continue;
+            max1=row[4]
+
             print(f"[INFO] Extracting BBox coordinates. . . ")
             x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape) ## BBOx coordniates
             text_d = classes[int(labels[i])]
@@ -69,10 +75,11 @@ def plot_boxes(results, frame,classes):
 
             plate_num = recognize_plate_easyocr(img =final, coords= coords, reader= EASY_OCR, region_threshold= OCR_TH)
             print(plate_num)
+            print("ni")
             # if text_d == 'mask':
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2) ## BBox
-            cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 255,0), -1) ## for text label background
-            cv2.putText(frame, f"{plate_num}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 2)
+            # cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2) ## BBox
+            # cv2.rectangle(frame, (x1, y1-20), (x2, y1), (0, 255,0), -1) ## for text label background
+            # cv2.putText(frame, f"{plate_num}", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 2)
             # cv2.imwrite("./output/np.jpg",frame[int(y1)-25:int(y2)+25, int(x1)-25:int(x2)+25])    
     return plate_num
 
@@ -152,6 +159,9 @@ def filter_text(region, ocr_result, region_threshold):
         if length*height / rectangle_size > region_threshold:
             res= ''.join(ch for ch in result[1] if ch.isalnum())  #removing non alphanumeric chars
             plate.append(res)
+    if len(plate)==0:
+        return ["OOps! Couldnt Detect"];
+
     return plate
 
 
@@ -174,17 +184,21 @@ def filter_text(region, ocr_result, region_threshold):
 
 ### ---------------------------------------------- Main function -----------------------------------------------------
 
-def main(img_path=None, vid_path=None,vid_out = None):
-    print(f"[INFO] Loading model... ");
+def main(img=None, vid_path=None,vid_out = None):
+    # print(f"[INFO] Loading model... ");
     ## loading the custom trained model
     # model =  torch.hub.load('ultralytics/yolov5', 'custom', path='last.pt',force_reload=True) ## if you want to download the git repo and then run the detection
     # model =  torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt',force_reload=True) ### The repo is stored locally
     classes = model.names ### class names in string format
     ### --------------- for detection on image --------------------
-    if img_path != None:
-        print(f"[INFO] Working with image: {img_path}")
-        img_out_name = f"./output/result_{img_path.split('/')[-1]}"
-        frame = cv2.imread(img_path) ### reading the image
+    
+    npimg = np.fromstring(img, np.uint8)
+    if img != None:
+        print(f"[INFO] Working with image:")
+        # img_out_name = f"./output/result_{img_path.split('/')[-1]}"
+        # convert numpy array to image
+        frame= cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+         ### reading the image
         frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
         results = detectx(frame, model = model) ### DETECTION HAPPENING HERE    
         frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
